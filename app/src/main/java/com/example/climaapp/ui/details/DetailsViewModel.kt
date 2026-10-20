@@ -1,16 +1,17 @@
 package com.example.climaapp.ui.details
 
-
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.climaapp.data.repository.WeatherRepository
 import com.example.climaapp.domain.model.City
 import com.example.climaapp.domain.model.WeatherForecast
+import com.example.climaapp.domain.repository.WeatherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import javax.inject.Inject
@@ -32,7 +33,8 @@ class DetailsViewModel @Inject constructor(
         name = URLDecoder.decode(checkNotNull<String>(savedStateHandle["name"]), "UTF-8"),
         country = URLDecoder.decode(checkNotNull<String>(savedStateHandle["country"]), "UTF-8"),
         latitude = checkNotNull<Float>(savedStateHandle["lat"]).toDouble(),
-        longitude = checkNotNull<Float>(savedStateHandle["lon"]).toDouble()
+        longitude = checkNotNull<Float>(savedStateHandle["lon"]).toDouble(),
+        region = URLDecoder.decode(checkNotNull<String>(savedStateHandle["region"]), "UTF-8").ifBlank { null }
     )
 
     private val _uiState = MutableStateFlow<DetailsUiState>(DetailsUiState.Loading)
@@ -46,6 +48,16 @@ class DetailsViewModel @Inject constructor(
                     onFailure = { DetailsUiState.Error(it.message ?: "Erro ao buscar previsão") }
                 )
             }
+        }
+    }
+
+    val isFavorite: StateFlow<Boolean> = repository.isFavorite(city.id)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun toggleFavorite() {
+        val currentTemperature = (uiState.value as? DetailsUiState.Success)?.forecast?.currentTemperature
+        viewModelScope.launch {
+            repository.toggleFavorite(city.copy(lastTemperature = currentTemperature))
         }
     }
 }
