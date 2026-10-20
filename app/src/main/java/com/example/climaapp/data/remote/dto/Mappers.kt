@@ -6,9 +6,10 @@ import com.example.climaapp.domain.model.WeatherForecast
 fun GeocodingResultDto.toDomain(): City = City(
     id = id,
     name = name,
-    country = country,
+    country = country ?: "",
     latitude = latitude,
-    longitude = longitude
+    longitude = longitude,
+    region = listOfNotNull(admin3, admin2, admin1).distinct().take(2).joinToString(", ").ifBlank { null }
 )
 
 fun ForecastResponseDto.toDomain(): WeatherForecast = WeatherForecast(
