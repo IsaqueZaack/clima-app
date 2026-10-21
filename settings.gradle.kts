@@ -22,5 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "clima-app"
+rootProject.name = "ClimaApp"
 include(":app")
+ 
